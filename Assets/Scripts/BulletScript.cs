@@ -13,4 +13,6 @@ public class BulletScript : MonoBehaviour
     {
         Destroy(gameObject, survivalTime); // Automatically destroy bullet after survivalTime is up
     }
+
+    // test
 }
