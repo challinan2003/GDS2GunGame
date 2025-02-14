@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "GameTemplate6.sln"
+    "dotnet.defaultSolution": "GDS2GunGame.sln"
 }
