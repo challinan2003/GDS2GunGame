@@ -20,4 +20,6 @@ public class MoveCamera : MonoBehaviour
         //It's a good idea not to have a camera attatched directly to a RigidBody object, so this is the next best thing
         transform.position = cameraPosition.position;
     }
+    //test 
+    // hi trevor
 }
