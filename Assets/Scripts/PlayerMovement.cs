@@ -154,17 +154,12 @@ public class PlayerMovement : MonoBehaviour
         // on slope
         if (OnSlope() && !exitingSlope)
         {
+            //float slopeFactor = 1f - (Vector3.Angle(Vector3.up, slopeHit.normal) / maxSlopeAngle);
             rb.AddForce(GetSlopeMoveDirection() * moveSpeed * 20f, ForceMode.Force);
 
-            if (rb.linearVelocity.y > 0 && state == MovementState.walking)
+            if (rb.linearVelocity.y > 0)
             {
-                Debug.Log("adding downwards force while walking up slope");
-                rb.AddForce(Vector3.down * 20f, ForceMode.Force);
-            }
-            else if(rb.linearVelocity.y > 0 && state == MovementState.sprinting)
-            {
-                Debug.Log("adding downwards force while running up slope");
-                rb.AddForce(Vector3.down * 100f, ForceMode.Force);
+                rb.AddForce(Vector3.down * 80f, ForceMode.Force);
             }
         }
         // on ground
@@ -192,6 +187,12 @@ public class PlayerMovement : MonoBehaviour
         {
             if (rb.linearVelocity.magnitude > moveSpeed)
                 rb.linearVelocity = rb.linearVelocity.normalized * moveSpeed;
+        }
+
+        //apply deceleration when not moving
+        else if (OnSlope() && horizontalInput == 0 && verticalInput == 0)
+        {
+            rb.linearVelocity *= 0.5f; // Apply gradual friction
         }
 
         // limiting speed on ground or in air
