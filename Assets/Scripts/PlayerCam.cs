@@ -38,6 +38,7 @@ public class PlayerCam : MonoBehaviour
     //Update runs every frame. It's biggest con is that it is "frame dependent" meaning if you start dropping frames,
     //this code will LITERALLY run fewer times per second.
     //For that reason, Update is best for handling user input, animations, and non-physics-related logic (which should go in FixedUpdate)
+
     private void Update()
     {
         //These track mouse movement.
@@ -61,7 +62,5 @@ public class PlayerCam : MonoBehaviour
         transform.rotation = Quaternion.Euler(xRotation, yRotation, 0);
         //Here we rotate the Player, note the player only turns left and right, we don't need it rotating its whole body in space to look up or down
         orientation.rotation = Quaternion.Euler(0, yRotation, 0);
-
     }
-
 }

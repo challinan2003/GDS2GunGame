@@ -101,19 +101,6 @@ public class PlayerMovement : MonoBehaviour
 
             Invoke(nameof(ResetJump), jumpCooldown);
         }
-
-        // start crouch
-        if (Input.GetKeyDown(crouchKey))
-        {
-            transform.localScale = new Vector3(transform.localScale.x, crouchYScale, transform.localScale.z);
-            rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
-        }
-
-        // stop crouch
-        if (Input.GetKeyUp(crouchKey))
-        {
-            transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
-        }
     }
 
     private void StateHandler()
@@ -156,28 +143,25 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.AddForce(GetSlopeMoveDirection() * moveSpeed * 20f, ForceMode.Force);
 
-            if (rb.linearVelocity.y > 0 && state == MovementState.walking)
+            if (rb.linearVelocity.y > 0)
             {
                 Debug.Log("adding downwards force while walking up slope");
-                rb.AddForce(Vector3.down * 20f, ForceMode.Force);
+                rb.AddForce(Vector3.down * 50f, ForceMode.Force);
             }
-            else if(rb.linearVelocity.y > 0 && state == MovementState.sprinting)
-            {
-                Debug.Log("adding downwards force while running up slope");
-                rb.AddForce(Vector3.down * 100f, ForceMode.Force);
-            }
+
+            rb.linearDamping = 5;
         }
         // on ground
         else if (grounded)
         {
-            Debug.Log("adding force while grounded");
+            //Debug.Log("adding force while grounded");
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
         }
 
         // in air
         else if (!grounded)
         {
-            Debug.Log("adding force while in air");
+            //Debug.Log("adding force while in air");
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
         }
             
