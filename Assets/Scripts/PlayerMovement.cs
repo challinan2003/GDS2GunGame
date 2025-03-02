@@ -69,14 +69,14 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         // ground check
-        grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.3f, whatIsGround);
+        grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
 
         MyInput();
         SpeedControl();
         StateHandler();
 
         // handle drag
-        if (grounded)
+        if (grounded || OnSlope())
             rb.linearDamping = groundDrag;
         else
             rb.linearDamping = 0;
@@ -154,28 +154,21 @@ public class PlayerMovement : MonoBehaviour
         // on slope
         if (OnSlope() && !exitingSlope)
         {
-            //float slopeFactor = 1f - (Vector3.Angle(Vector3.up, slopeHit.normal) / maxSlopeAngle);
             rb.AddForce(GetSlopeMoveDirection() * moveSpeed * 20f, ForceMode.Force);
 
+            //manually applied gravity downwards force on slope
             if (rb.linearVelocity.y > 0)
-            {
-                rb.AddForce(Vector3.down * 80f, ForceMode.Force);
-            }
+                rb.AddForce(Vector3.down * 30f, ForceMode.Force);
         }
+
         // on ground
         else if (grounded)
-        {
-            Debug.Log("adding force while grounded");
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
-        }
 
         // in air
         else if (!grounded)
-        {
-            Debug.Log("adding force while in air");
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
-        }
-            
+
         // turn gravity off while on slope
         rb.useGravity = !OnSlope();
     }
@@ -187,12 +180,6 @@ public class PlayerMovement : MonoBehaviour
         {
             if (rb.linearVelocity.magnitude > moveSpeed)
                 rb.linearVelocity = rb.linearVelocity.normalized * moveSpeed;
-        }
-
-        //apply deceleration when not moving
-        else if (OnSlope() && horizontalInput == 0 && verticalInput == 0)
-        {
-            rb.linearVelocity *= 0.5f; // Apply gradual friction
         }
 
         // limiting speed on ground or in air
