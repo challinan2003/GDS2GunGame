@@ -49,10 +49,6 @@ public class PlayerMovement : MonoBehaviour
 
     public MovementState state;
 
-    [Header("PLAYERS UI")]
-    public GameObject velocityText;
-    public GameObject speedText;
-
     public enum MovementState
     {
         walking,
@@ -73,7 +69,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        PlayerDebuggerUI();
         // ground check
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
 
@@ -91,6 +86,11 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         MovePlayer();
+    }
+
+    private void LateUpdate()
+    {
+        PlayerDebuggerUI();
     }
 
     private void MyInput()
@@ -321,8 +321,11 @@ public class PlayerMovement : MonoBehaviour
     public void PlayerDebuggerUI()
     {
         //need to show the players current velocity
-        TextMeshProUGUI textMesh1 = velocityText.GetComponent<TextMeshProUGUI>();
-        TextMeshProUGUI textMesh2 = speedText.GetComponent<TextMeshProUGUI>();
+        GameObject velocityObject = GameObject.Find("VelocityText");
+        GameObject speedObject = GameObject.Find("SpeedText");
+        
+        TextMeshProUGUI textMesh1 = velocityObject.GetComponent<TextMeshProUGUI>();
+        TextMeshProUGUI textMesh2 = speedObject.GetComponent<TextMeshProUGUI>();
         textMesh1.text = "Velocity:" + rb.linearVelocity;
         textMesh2.text = "Speed:" + moveDirection.normalized * moveSpeed * 10f;
     }

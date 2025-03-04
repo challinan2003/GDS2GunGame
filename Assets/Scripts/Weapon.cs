@@ -2,7 +2,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 
-public class PlayerGun2 : MonoBehaviour
+public class Weapon : MonoBehaviour
 {
     //these are used in the child classes
     protected bool isShooting;
@@ -17,25 +17,24 @@ public class PlayerGun2 : MonoBehaviour
 
     protected GunState currentGunState;
 
-    protected PlayerMovement player;
-
     //this is specific to this class only.
     private bool allowReset = true;
 
     [Header("GUN STATS")]
     public float shootingDelay = 0.5f;
-    public int GunAmmo;
+    private int GunAmmo;
     public int MaxGunAmmo;
     public int bulletPerBurst = 3;
-    public int currentBulletsInBurst;
+    private int currentBulletsInBurst;
     public GameObject bulletPrefab;
     public Transform bulletSpawn;
     public float bulletVelocity = 30f;
     public float bulletPrefabBulletTime = 3f;
     public float spreadIntensity;
+    public ShootingMode currentShootingMode;
+    public GameObject muzzleFlash;
 
-    [Header("GUN UI")]
-    public GameObject gunText;
+    private GameObject gunText;
 
     public enum ShootingMode
     {
@@ -43,12 +42,6 @@ public class PlayerGun2 : MonoBehaviour
         Burst,
         Auto
     }
-
-    public ShootingMode currentShootingMode;
-
-    [Header("REFERENCES")]
-    public GameObject Player;
-    //public GameObject muzzleFlash;
 
     private void Awake()
     {
@@ -60,9 +53,6 @@ public class PlayerGun2 : MonoBehaviour
         currentGunState = GunState.FULL;
 
         GunAmmo = MaxGunAmmo;
-
-        //get access to player state through the playerMovement script
-        player = Player.GetComponent<PlayerMovement>();
     }
 
     private void Start()
@@ -214,14 +204,15 @@ public class PlayerGun2 : MonoBehaviour
 
     private void ShowPlayerUI()
     {
-        TextMeshProUGUI textMeshPro = gunText.GetComponent<TextMeshProUGUI>();
+        GameObject textMeshObject = GameObject.Find("GunText");
+        TextMeshProUGUI textMeshInstanceOne = textMeshObject.GetComponent<TextMeshProUGUI>();
 
         if (currentGunState == GunState.RELOADING)
         {
-            textMeshPro.text = "Reloading... / " + MaxGunAmmo;
+            textMeshInstanceOne.text = "Reloading... / " + MaxGunAmmo;
         }
         else {
-            textMeshPro.text = GunAmmo + " / " + MaxGunAmmo;
+            textMeshInstanceOne.text = GunAmmo + " / " + MaxGunAmmo;
         }
     }
 }

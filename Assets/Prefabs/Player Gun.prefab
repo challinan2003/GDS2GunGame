@@ -9,10 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7465706349283738885}
-  - component: {fileID: 2300719789218755725}
   - component: {fileID: 6889017748404524159}
   - component: {fileID: 8141573877884457152}
   - component: {fileID: 6728022208295578613}
+  - component: {fileID: 5147388421274599172}
   m_Layer: 0
   m_Name: Player Gun
   m_TagString: Untagged
@@ -36,29 +36,6 @@ Transform:
   - {fileID: 1468984649655245499}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
---- !u!114 &2300719789218755725
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5903544420542166320}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2391808cbe655f94581570a08c0424a3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isAutomatic: 0
-  fireRate: 0.2
-  bulletPrefab: {fileID: 2246485592663222124, guid: 7d5567eff7b1e244491adfe72f205bb7, type: 3}
-  firePoint: {fileID: 1468984649655245499}
-  bulletSpeed: 20
-  bulletsPerShot: 1
-  bulletSpread: 0
-  maxAmmo: 10
-  reloadTime: 2
-  ammoText: {fileID: 0}
-  gunColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
 --- !u!33 &6889017748404524159
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -135,6 +112,31 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
+--- !u!114 &5147388421274599172
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5903544420542166320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2391808cbe655f94581570a08c0424a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  shootingDelay: 0.5
+  GunAmmo: 0
+  MaxGunAmmo: 10
+  bulletPerBurst: 3
+  currentBulletsInBurst: 0
+  bulletPrefab: {fileID: 0}
+  bulletSpawn: {fileID: 0}
+  bulletVelocity: 30
+  bulletPrefabBulletTime: 3
+  spreadIntensity: 0
+  gunText: {fileID: 0}
+  currentShootingMode: 0
+  Player: {fileID: 0}
 --- !u!1 &6052542857429944326
 GameObject:
   m_ObjectHideFlags: 0
