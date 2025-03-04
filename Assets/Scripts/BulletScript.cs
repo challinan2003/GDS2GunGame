@@ -1,20 +1,17 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BulletScript : MonoBehaviour
 {
-    public float survivalTime; //How long the bullet will be allowed to fly before it deletes itself
-
-    void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(Collision other)
     {
-        Destroy(gameObject); // Destroy bullet on impact with anything with a collider
+        if (other.gameObject.CompareTag("Enemy"))
+        {
+            Destroy(other.gameObject);
+        }
+        else {
+            Destroy(gameObject);
+        }
     }
-
-    void Start()
-    {
-        Destroy(gameObject, survivalTime); // Automatically destroy bullet after survivalTime is up
-    }
-
-    // test again
-    // test balls 
-
 }
