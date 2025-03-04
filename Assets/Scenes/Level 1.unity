@@ -240,6 +240,7 @@ GameObject:
   - component: {fileID: 266256261}
   - component: {fileID: 266256260}
   - component: {fileID: 266256259}
+  - component: {fileID: 266256262}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -304,6 +305,8 @@ MonoBehaviour:
   maxSlopeAngle: 0
   orientation: {fileID: 321500817}
   state: 0
+  velocityText: {fileID: 0}
+  speedText: {fileID: 0}
 --- !u!4 &266256261
 Transform:
   m_ObjectHideFlags: 0
@@ -322,6 +325,46 @@ Transform:
   - {fileID: 1454410851}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &266256262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 266256258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 527863513b3bdeb40bd3e8a4a9f1de39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveSpeed: 0
+  walkSpeed: 0
+  sprintSpeed: 0
+  groundDrag: 0
+  jumpForce: 0
+  jumpCooldown: 0
+  airMultiplier: 0
+  readyToJump: 0
+  crouchSpeed: 0
+  crouchYScale: 0
+  startYScale: 0
+  jumpKey: 32
+  sprintKey: 304
+  crouchKey: 306
+  playerHeight: 0
+  whatIsGround:
+    m_Bits: 0
+  grounded: 0
+  maxSlopeAngle: 0
+  exitingSlope: 0
+  orientation: {fileID: 0}
+  horizontalInput: 0
+  verticalInput: 0
+  moveDirection: {x: 0, y: 0, z: 0}
+  rb: {fileID: 0}
+  state: 0
+  velocityText: {fileID: 0}
+  speedText: {fileID: 0}
 --- !u!1 &272554840
 GameObject:
   m_ObjectHideFlags: 0

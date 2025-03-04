@@ -2,7 +2,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 
-public class GunScript : MonoBehaviour
+public class PlayerGun2 : MonoBehaviour
 {
     //these are used in the child classes
     protected bool isShooting;
