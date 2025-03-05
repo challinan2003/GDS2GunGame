@@ -9,6 +9,7 @@ public class PlayerMovement : MonoBehaviour
     private float moveSpeed;
     public float walkSpeed;
     public float sprintSpeed;
+    public float accelerationRate = 1f;
 
     public float groundDrag;
 
@@ -129,6 +130,7 @@ public class PlayerMovement : MonoBehaviour
         {
             state = MovementState.crouching;
             moveSpeed = crouchSpeed;
+            accelerationRate = 1f;
         }
 
         // Mode - Sprinting
@@ -136,6 +138,7 @@ public class PlayerMovement : MonoBehaviour
         {
             state = MovementState.sprinting;
             moveSpeed = sprintSpeed;
+            accelerationRate = 1.5f;
         }
 
         // Mode - Walking
@@ -143,12 +146,14 @@ public class PlayerMovement : MonoBehaviour
         {
             state = MovementState.walking;
             moveSpeed = walkSpeed;
+            accelerationRate = 1f;
         }
 
         // Mode - Air
         else
         {
             state = MovementState.air;
+            accelerationRate = 1.5f;
         }
     }
 
@@ -175,6 +180,17 @@ public class PlayerMovement : MonoBehaviour
         // on ground
         else if (grounded)
         {
+            //Acceleration Formula
+            //Force = Mass * acceleration
+            //if accelerationForce > 100 { accelerationForce = 100 }
+
+            //1.6 * 30 * 0.5
+            //float accelerationForce = rb.mass * accelerationAmount * accelerationRate;
+
+            //Debug.Log("accelerationForce: "+ accelerationForce);
+
+            //Vector3 forceVector = moveDirection.normalized * accelerationForce;
+
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
         }
 
@@ -191,37 +207,6 @@ public class PlayerMovement : MonoBehaviour
         rb.useGravity = !OnSlope();
     }
 
-    //private void Air_Accelerate()
-    //{
-    //    Vector3 wish_dir = moveDirection.normalized; // Normalize to get direction only
-    //    float wish_speed = moveSpeed * airMultiplier; // Set air movement speed
-
-    //    // Project velocity onto wish direction
-    //    float projSpeed = Vector3.Dot(rb.linearVelocity, wish_dir);
-
-    //    // Calculate how much speed needs to be added
-    //    float add_speed = wish_speed - projSpeed;
-
-    //    if (add_speed <= 0)
-    //    {
-    //        return; // Already at or above max desired speed
-    //    }
-
-    //    // Acceleration formula
-    //    float accelAmount = 300.0f; // Similar to sv_accelerate
-    //    float accelspeed = accelAmount * wish_speed * Time.deltaTime;
-
-    //    // Cap acceleration to not exceed needed speed
-    //    if (accelspeed > add_speed)
-    //    {
-    //        accelspeed = add_speed;
-    //    }
-
-    //    // Apply acceleration
-    //    rb.linearVelocity += wish_dir * accelspeed;
-    //}
-
-
     private void Air_Accelerate()
     {
         //Put acceleration code here.
@@ -237,8 +222,6 @@ public class PlayerMovement : MonoBehaviour
         // check if _dv > projSpeed
         // _dv = projSpeed
 
-        // player.linearVelocity = player.linearVelocity + wish_dir * _dv
-
         Vector3 wish_dir = moveDirection.normalized * moveSpeed;
 
         float projSpeed = Vector3.Dot(rb.linearVelocity, wish_dir);//returns 0 when 2nd vector is at 90 degrees
@@ -252,13 +235,12 @@ public class PlayerMovement : MonoBehaviour
         }
 
         float accelerationAmount = 300;
-        float _dv = accelerationAmount * Time.deltaTime;
+        float _dv = accelerationAmount * wish_speed * Time.deltaTime;
 
         if (_dv > projSpeed)
         {
             _dv = projSpeed;
         }
-
 
         rb.linearVelocity = rb.linearVelocity + wish_dir * _dv;
     }
@@ -323,10 +305,12 @@ public class PlayerMovement : MonoBehaviour
         //need to show the players current velocity
         GameObject velocityObject = GameObject.Find("VelocityText");
         GameObject speedObject = GameObject.Find("SpeedText");
-        
+
+        Vector3 mov_dir = moveDirection.normalized * moveSpeed * 10f;
+
         TextMeshProUGUI textMesh1 = velocityObject.GetComponent<TextMeshProUGUI>();
         TextMeshProUGUI textMesh2 = speedObject.GetComponent<TextMeshProUGUI>();
-        textMesh1.text = "Velocity:" + rb.linearVelocity;
-        textMesh2.text = "Speed:" + moveDirection.normalized * moveSpeed * 10f;
+        textMesh1.text = "Velocity:" + rb.linearVelocity.magnitude; 
+        textMesh2.text = "mov_dir:" + mov_dir.magnitude; // 1 * 10 * 10 = 100
     }
 }
