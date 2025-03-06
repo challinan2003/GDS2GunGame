@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -9,7 +9,15 @@ public class PlayerMovement : MonoBehaviour
     private float moveSpeed;
     public float walkSpeed;
     public float sprintSpeed;
-    public float accelerationRate = 1f;
+    public float slideSpeed;
+    public float climbSpeed;
+    public float wallRunSpeed;
+
+    private float desiredMoveSpeed;
+    private float lastDesiredMoveSpeed;
+
+    public float speedIncreaseMultiplier;
+    public float slopeIncreaseMultiplier;
 
     public float groundDrag;
 
@@ -32,7 +40,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Ground Check")]
     public float playerHeight;
     public LayerMask whatIsGround;
-    bool grounded;
+    public bool grounded;
 
     [Header("Slope Handling")]
     public float maxSlopeAngle;
@@ -49,14 +57,20 @@ public class PlayerMovement : MonoBehaviour
     Rigidbody rb;
 
     public MovementState state;
-
     public enum MovementState
     {
         walking,
         sprinting,
+        wallrunning,
+        climbing,
         crouching,
+        sliding,
         air
     }
+
+    public bool sliding;
+    public bool climbing;
+    public bool wallrunning;
 
     private void Start()
     {
@@ -86,12 +100,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        MovePlayer();
-    }
-
-    private void LateUpdate()
-    {
         PlayerDebuggerUI();
+        MovePlayer();
     }
 
     private void MyInput()
@@ -125,36 +135,95 @@ public class PlayerMovement : MonoBehaviour
 
     private void StateHandler()
     {
+        if (wallrunning)
+        {
+            state = MovementState.wallrunning;
+            desiredMoveSpeed = wallRunSpeed;
+        }
+
+        else if (climbing) {
+            state = MovementState.climbing;
+            desiredMoveSpeed = climbSpeed;
+        }
+
+        // Mode - Sliding
+        else if (sliding)
+        {
+            state = MovementState.sliding;
+
+            if (OnSlope() && rb.linearVelocity.y < 0.1f)
+                desiredMoveSpeed = slideSpeed;
+
+            else
+                desiredMoveSpeed = sprintSpeed;
+        }
+
         // Mode - Crouching
-        if (Input.GetKey(crouchKey))
+        else if (Input.GetKey(crouchKey))
         {
             state = MovementState.crouching;
-            moveSpeed = crouchSpeed;
-            accelerationRate = 1f;
+            desiredMoveSpeed = crouchSpeed;
         }
 
         // Mode - Sprinting
         else if (grounded && Input.GetKey(sprintKey))
         {
             state = MovementState.sprinting;
-            moveSpeed = sprintSpeed;
-            accelerationRate = 1.5f;
+            desiredMoveSpeed = sprintSpeed;
         }
 
         // Mode - Walking
         else if (grounded)
         {
             state = MovementState.walking;
-            moveSpeed = walkSpeed;
-            accelerationRate = 1f;
+            desiredMoveSpeed = walkSpeed;
         }
 
         // Mode - Air
         else
         {
             state = MovementState.air;
-            accelerationRate = 1.5f;
         }
+
+        // check if desiredMoveSpeed has changed drastically
+        if (Mathf.Abs(desiredMoveSpeed - lastDesiredMoveSpeed) > 4f && moveSpeed != 0)
+        {
+            StopAllCoroutines();
+            StartCoroutine(SmoothlyLerpMoveSpeed());
+        }
+        else
+        {
+            moveSpeed = desiredMoveSpeed;
+        }
+
+        lastDesiredMoveSpeed = desiredMoveSpeed;
+    }
+
+    private IEnumerator SmoothlyLerpMoveSpeed()
+    {
+        // smoothly lerp movementSpeed to desired value
+        float time = 0;
+        float difference = Mathf.Abs(desiredMoveSpeed - moveSpeed);
+        float startValue = moveSpeed;
+
+        while (time < difference)
+        {
+            moveSpeed = Mathf.Lerp(startValue, desiredMoveSpeed, time / difference);
+
+            if (OnSlope())
+            {
+                float slopeAngle = Vector3.Angle(Vector3.up, slopeHit.normal);
+                float slopeAngleIncrease = 1 + (slopeAngle / 90f);
+
+                time += Time.deltaTime * speedIncreaseMultiplier * slopeIncreaseMultiplier * slopeAngleIncrease;
+            }
+            else
+                time += Time.deltaTime * speedIncreaseMultiplier;
+
+            yield return null;
+        }
+
+        moveSpeed = desiredMoveSpeed;
     }
 
     private void MovePlayer()
@@ -165,84 +234,22 @@ public class PlayerMovement : MonoBehaviour
         // on slope
         if (OnSlope() && !exitingSlope)
         {
-            rb.AddForce(GetSlopeMoveDirection() * moveSpeed * 20f, ForceMode.Force);
+            rb.AddForce(GetSlopeMoveDirection(moveDirection) * moveSpeed * 20f, ForceMode.Force);
 
-            //manually applied gravity downwards force on slope when moving up slope
             if (rb.linearVelocity.y > 0)
-                rb.AddForce(Vector3.down * 30f, ForceMode.Force);
-            else if (rb.linearVelocity.y < 0 && state == MovementState.crouching)
-            {
-                Debug.Log("moving down slope while crouching");
-            }
-            //if crouching while on slope i can turn off the friction or linear damping, and add some velocity.
+                rb.AddForce(Vector3.down * 80f, ForceMode.Force);
         }
 
         // on ground
         else if (grounded)
-        {
-            //Acceleration Formula
-            //Force = Mass * acceleration
-            //if accelerationForce > 100 { accelerationForce = 100 }
-
-            //1.6 * 30 * 0.5
-            //float accelerationForce = rb.mass * accelerationAmount * accelerationRate;
-
-            //Debug.Log("accelerationForce: "+ accelerationForce);
-
-            //Vector3 forceVector = moveDirection.normalized * accelerationForce;
-
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
-        }
 
         // in air
         else if (!grounded)
-        {
-            Air_Accelerate();
-
-            //air control
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
-        }
 
         // turn gravity off while on slope
         rb.useGravity = !OnSlope();
-    }
-
-    private void Air_Accelerate()
-    {
-        //Put acceleration code here.
-
-        //0. normalize the wish_velcity so the player does not gain speed past a certain amount
-        //1. so we use the velocity, and wish_dir vectors dot product to find the limit when we increase the players speed
-        //2. then we subtract our wish_dir - proj_speed = add_speed
-        //2. if add_speed <=0 then our dot product puts us beyond the acceleration limit
-        //3. else
-        //
-        // acceleration = dv / dt =
-        // _dv = acceleration * dt;
-        // check if _dv > projSpeed
-        // _dv = projSpeed
-
-        Vector3 wish_dir = moveDirection.normalized * moveSpeed;
-
-        float projSpeed = Vector3.Dot(rb.linearVelocity, wish_dir);//returns 0 when 2nd vector is at 90 degrees
-
-        float wish_speed = 30;
-        float add_speed = wish_speed - projSpeed;
-
-        if (add_speed < 0)
-        {
-            return;
-        }
-
-        float accelerationAmount = 300;
-        float _dv = accelerationAmount * wish_speed * Time.deltaTime;
-
-        if (_dv > projSpeed)
-        {
-            _dv = projSpeed;
-        }
-
-        rb.linearVelocity = rb.linearVelocity + wish_dir * _dv;
     }
 
     private void SpeedControl()
@@ -259,7 +266,7 @@ public class PlayerMovement : MonoBehaviour
         {
             Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
-            // limit linearVelocity if needed
+            // limit velocity if needed
             if (flatVel.magnitude > moveSpeed)
             {
                 Vector3 limitedVel = flatVel.normalized * moveSpeed;
@@ -272,7 +279,7 @@ public class PlayerMovement : MonoBehaviour
     {
         exitingSlope = true;
 
-        // reset y linearVelocity
+        // reset y velocity
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
@@ -284,7 +291,7 @@ public class PlayerMovement : MonoBehaviour
         exitingSlope = false;
     }
 
-    private bool OnSlope()
+    public bool OnSlope()
     {
         if (Physics.Raycast(transform.position, Vector3.down, out slopeHit, playerHeight * 0.5f + 0.3f))
         {
@@ -295,22 +302,20 @@ public class PlayerMovement : MonoBehaviour
         return false;
     }
 
-    private Vector3 GetSlopeMoveDirection()
+    public Vector3 GetSlopeMoveDirection(Vector3 direction)
     {
-        return Vector3.ProjectOnPlane(moveDirection, slopeHit.normal).normalized;
+        return Vector3.ProjectOnPlane(direction, slopeHit.normal).normalized;
     }
 
     public void PlayerDebuggerUI()
     {
         //need to show the players current velocity
-        GameObject velocityObject = GameObject.Find("VelocityText");
-        GameObject speedObject = GameObject.Find("SpeedText");
+        GameObject velocityObj = GameObject.Find("txt_Velocity");
+        GameObject playerStateObj = GameObject.Find("txt_playerState");
 
-        Vector3 mov_dir = moveDirection.normalized * moveSpeed * 10f;
-
-        TextMeshProUGUI textMesh1 = velocityObject.GetComponent<TextMeshProUGUI>();
-        TextMeshProUGUI textMesh2 = speedObject.GetComponent<TextMeshProUGUI>();
-        textMesh1.text = "Velocity:" + rb.linearVelocity.magnitude; 
-        textMesh2.text = "mov_dir:" + mov_dir.magnitude; // 1 * 10 * 10 = 100
+        TextMeshProUGUI textMesh1 = velocityObj.GetComponent<TextMeshProUGUI>();
+        TextMeshProUGUI textMesh2 = playerStateObj.GetComponent<TextMeshProUGUI>();
+        textMesh1.text = "Velocity:" + rb.linearVelocity.magnitude;
+        textMesh2.text = "" + state;
     }
 }
