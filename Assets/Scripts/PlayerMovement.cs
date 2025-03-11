@@ -106,10 +106,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void MyInput()
     {
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-        verticalInput = Input.GetAxisRaw("Vertical");
+        horizontalInput = Input.GetAxisRaw("Horizontal");//a,d
+        verticalInput = Input.GetAxisRaw("Vertical");//w,s
 
-        // when to jump
+        // Allow bunny hop when in air and jump button is held
         if (Input.GetKey(jumpKey) && readyToJump && grounded)
         {
             readyToJump = false;
@@ -186,6 +186,8 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // check if desiredMoveSpeed has changed drastically
+        //EX: desiredMoveSpeed = 16
+        //    moveSpeed = 16
         if (Mathf.Abs(desiredMoveSpeed - lastDesiredMoveSpeed) > 4f && moveSpeed != 0)
         {
             StopAllCoroutines();
@@ -209,6 +211,7 @@ public class PlayerMovement : MonoBehaviour
         while (time < difference)
         {
             moveSpeed = Mathf.Lerp(startValue, desiredMoveSpeed, time / difference);
+            //Debug.Log(moveSpeed);
 
             if (OnSlope())
             {
@@ -246,10 +249,12 @@ public class PlayerMovement : MonoBehaviour
 
         // in air
         else if (!grounded)
-            rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
+        {
+            rb.AddForce(moveDirection.normalized * moveSpeed * 50f * airMultiplier, ForceMode.Force);
+        }
 
         // turn gravity off while on slope
-        rb.useGravity = !OnSlope();
+        if(!wallrunning) rb.useGravity = !OnSlope();
     }
 
     private void SpeedControl()
@@ -260,10 +265,10 @@ public class PlayerMovement : MonoBehaviour
             if (rb.linearVelocity.magnitude > moveSpeed)
                 rb.linearVelocity = rb.linearVelocity.normalized * moveSpeed;
         }
-
-        // limiting speed on ground or in air
+        // limiting speed on ground
         else
         {
+
             Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
             // limit velocity if needed
@@ -284,6 +289,7 @@ public class PlayerMovement : MonoBehaviour
 
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
     }
+
     private void ResetJump()
     {
         readyToJump = true;

@@ -5,25 +5,26 @@ using UnityEngine;
 public class Weapon : MonoBehaviour
 {
     //these are used in the child classes
-    protected bool isShooting;
-    protected bool readyToShoot;
+    private bool isShooting;
+    private bool readyToShoot;
 
-    protected enum GunState
+    private enum GunState
     {
         RELOADING,
         EMPTY,
         FULL,
     }
 
-    protected GunState currentGunState;
+    private GunState currentGunState;
 
     //this is specific to this class only.
     private bool allowReset = true;
 
     [Header("GUN STATS")]
     public float shootingDelay = 0.5f;
-    private int GunAmmo;
-    public int MaxGunAmmo;
+    public float reloadTime;
+    protected int currentWeaponAmmo;
+    public int MaxWeaponAmmo;
     public int bulletPerBurst = 3;
     private int currentBulletsInBurst;
     public GameObject bulletPrefab;
@@ -35,6 +36,11 @@ public class Weapon : MonoBehaviour
     public GameObject muzzleFlash;
 
     private GameObject gunText;
+
+    [Header("Keybinds")]
+    public KeyCode reload = KeyCode.R;
+
+    public WeaponSwap wp;
 
     public enum ShootingMode
     {
@@ -52,7 +58,7 @@ public class Weapon : MonoBehaviour
 
         currentGunState = GunState.FULL;
 
-        GunAmmo = MaxGunAmmo;
+        currentWeaponAmmo = MaxWeaponAmmo;
     }
 
     private void Start()
@@ -62,15 +68,20 @@ public class Weapon : MonoBehaviour
 
     public IEnumerator Reload()
     {
+        Debug.Log("reloading");
+
         currentGunState = GunState.RELOADING;
 
-        WaitForSeconds wait = new WaitForSeconds(2f);
+        WaitForSeconds wait = new WaitForSeconds(reloadTime);
 
         yield return wait;
 
         //set bullets for burst, and gunAmmo
-        GunAmmo = MaxGunAmmo;
+        currentWeaponAmmo = MaxWeaponAmmo;
+
         currentGunState = GunState.FULL;
+
+        readyToShoot = true;
     }
 
     private void InputHandler()
@@ -79,99 +90,133 @@ public class Weapon : MonoBehaviour
         {
             isShooting = Input.GetKey(KeyCode.Mouse0);
         }
-        else if (currentShootingMode == ShootingMode.Single)
+        else if (currentShootingMode == ShootingMode.Single || currentShootingMode == ShootingMode.Burst)
         {
             isShooting = Input.GetKeyDown(KeyCode.Mouse0);
         }
 
-        bool isReloadButtonPressed = Input.GetKeyDown(KeyCode.Tab);
+        //RELOAD HANDLER
         bool canReload = (currentGunState != GunState.RELOADING);
-        bool isAmmoEmpty = GunAmmo <= 0;
-        bool canReloadAmmo = (GunAmmo > 0 && GunAmmo < MaxGunAmmo);
+        bool isAmmoEmpty = currentWeaponAmmo <= 0;
+        bool canReloadAmmo = (currentWeaponAmmo > 0 && currentWeaponAmmo < MaxWeaponAmmo);
 
         //1. is reload button pressed
         //2. is the player moving or idle
         //3. is the gunAmmo empty
         //4. is the gun state not already reloading
-        if (isReloadButtonPressed && canReload && (isAmmoEmpty || canReloadAmmo))
+        if (Input.GetKeyDown(reload) && canReload && (isAmmoEmpty || canReloadAmmo))
         {
             StartCoroutine(Reload());
         }
-
     }
 
     // Update is called once per frame
     void Update()
     {
         InputHandler();
+
         ShowPlayerUI();
 
-        //if the player is ready to shoot, and is pressing the shoot button, and is not sprinting
+        // 1. can we shoot(boolean)
+        // 2. isShooting key pressed down or at all
         if (readyToShoot && isShooting)
         {
+            //Debug.Log("fire");
             FireWeapon();
         }
     }
 
-    // The Fire method will be used by most weapons and can be shared, but the virtual keyword allows it to be overriden in a child class.
-    public virtual void FireWeapon()
+    public void CreateBulletAndAddForce()
     {
-        //if ammo is empty return early
-        if (GunAmmo <= 0)
-        {
-            currentGunState = GunState.EMPTY;
-            return;
-        }
-
-        readyToShoot = false;
+        ////////////////////////////////////////////////////////////////////////////////
 
         Vector3 shootingDirection = CalculateDirectionAndSpread().normalized;
 
         GameObject bullet = Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.identity);
 
-        //point the bullet to face the shooting direction
+        //point the bullet to face the shooting direction 
         bullet.transform.forward = shootingDirection;
 
         bullet.GetComponent<Rigidbody>().AddForce(shootingDirection * bulletVelocity, ForceMode.Impulse);
 
-        StartCoroutine(DestroyBulletAfterTime(bullet, bulletPrefabBulletTime));
-
-        //soft locks the FireWeapon Method with a shootingDelay
-        if (allowReset)
-        {
-            Invoke(nameof(ResetShot), shootingDelay);//wait x seconds to shoot again.
-            allowReset = false;
-        }
-
-        //if its a burst weapon shoot all three bullets then subtract three from the gunAmmo
-        if (currentShootingMode == ShootingMode.Burst)
-        {
-
-            if (currentBulletsInBurst >= 0)
-            {
-                currentBulletsInBurst--;
-                Invoke("FireWeapon", shootingDelay);
-            }
-            //if the bullets mode is burst and currentBullets in burst run out then restock the currentBulletsInBurst and subtract the GunAmmo by the bulletPerBurst
-            else
-            {
-                GunAmmo -= bulletPerBurst;
-                currentBulletsInBurst = bulletPerBurst;
-            }
-        }
-        else
-        {
-            GunAmmo--;
-        }
+        StartCoroutine(DestroyBulletAfterTime(bullet, bulletPrefabBulletTime));//destroy bullet after some time
     }
 
-    private void ResetShot()
+    // The Fire method will be used by most weapons and can be shared, but the virtual keyword allows it to be overriden in a child class.
+    public void FireWeapon()
     {
-        readyToShoot = true;
-        allowReset = true;
+        //THIS IS USED TO MAKE SURE THAT WE CAN NOT SHOOT AGAIN
+        readyToShoot = false;
+
+        // Prevent shooting if out of ammo, currently reloading, or don't have enough ammo for a burst
+        if (currentWeaponAmmo <= 0 || currentGunState == GunState.RELOADING || (currentShootingMode == ShootingMode.Burst && currentWeaponAmmo < bulletPerBurst))
+        {
+            //Debug.Log("Can't shoot");
+            return;
+        }
+
+        if (currentShootingMode == ShootingMode.Single)
+        {
+            CreateBulletAndAddForce();
+            currentWeaponAmmo--;
+            Invoke(nameof(ResetShot), shootingDelay);//WAIT XXX Seconds Before shooting again
+        }
+
+        //burst
+        else if (currentShootingMode == ShootingMode.Burst)
+        {
+            Debug.Log("shoot burst");
+
+            // Check if we have enough ammo for a full burst
+            if (currentWeaponAmmo < bulletPerBurst)
+            {
+                Debug.Log("Not enough ammo for burst fire");
+                return;
+            }
+
+            // bulletPerBurst = 3
+            // bulletPrefabBulletTime = 0.5
+            // delay between each shot is the average time between each one
+            // shootingDelay = 0.5 / 3 = 0.1666667 seconds
+            //float delayBetweenBullet = (shootingDelay / bulletPerBurst);
+
+            // Start the burst sequence with a delay between each shot
+            float delayBetweenBullet = (shootingDelay / bulletPerBurst);
+
+            for (int i = 0; i < bulletPerBurst; i++)
+            {
+                Invoke(nameof(CreateBulletAndAddForce), delayBetweenBullet * i);
+            }
+
+            // Subtract ammo after the burst sequence is complete
+            currentWeaponAmmo -= bulletPerBurst;
+
+            // Enforce the burst cooldown before next shot
+            Invoke(nameof(ResetShot), shootingDelay);
+        }
+        else if(currentShootingMode == ShootingMode.Auto) // Auto mode
+        {
+            float delayBetweenBullet = (shootingDelay / MaxWeaponAmmo);
+
+            CreateBulletAndAddForce();
+            currentWeaponAmmo--;
+
+            //Delay Between each bullet shot
+            Invoke(nameof(CreateBulletAndAddForce), delayBetweenBullet);
+
+            // set readyToShoot to true
+            Invoke(nameof(ResetShot), shootingDelay);
+        }
+
     }
 
-    private Vector3 CalculateDirectionAndSpread()
+    public void ResetShot()
+    {
+        //Debug.Log("reset shot");
+        readyToShoot = true;
+    }
+
+    public Vector3 CalculateDirectionAndSpread()
     {
         Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
@@ -195,7 +240,7 @@ public class Weapon : MonoBehaviour
         return direction + new Vector3(x, y, 0);
     }
 
-    private IEnumerator DestroyBulletAfterTime(GameObject bullet, float bulletPrefabBulletTime)
+    public IEnumerator DestroyBulletAfterTime(GameObject bullet, float bulletPrefabBulletTime)
     {
         yield return new WaitForSeconds(bulletPrefabBulletTime);
 
@@ -204,15 +249,22 @@ public class Weapon : MonoBehaviour
 
     private void ShowPlayerUI()
     {
-        GameObject textMeshObject = GameObject.Find("GunText");
-        TextMeshProUGUI textMeshInstanceOne = textMeshObject.GetComponent<TextMeshProUGUI>();
+        GameObject textMeshObject1 = GameObject.Find("GunText");
+        TextMeshProUGUI textMeshInstanceOne = textMeshObject1.GetComponent<TextMeshProUGUI>();
 
         if (currentGunState == GunState.RELOADING)
         {
-            textMeshInstanceOne.text = "Reloading... / " + MaxGunAmmo;
+            textMeshInstanceOne.text = "Reloading... / " + MaxWeaponAmmo;
         }
         else {
-            textMeshInstanceOne.text = GunAmmo + " / " + MaxGunAmmo;
+            textMeshInstanceOne.text = currentWeaponAmmo + " / " + MaxWeaponAmmo;
         }
+
+        GameObject currentWeapon = wp.currentWeapons[wp.currentWeaponIndex];
+
+        GameObject textMeshObject2 = GameObject.Find("txtCurrentWeapon");
+        TextMeshProUGUI textMeshInstanceTwo = textMeshObject2.GetComponent<TextMeshProUGUI>();
+
+        textMeshInstanceTwo.text = "" + currentWeapon.name;
     }
 }
