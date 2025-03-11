@@ -262,9 +262,9 @@ public class Weapon : MonoBehaviour
 
         GameObject currentWeapon = wp.currentWeapons[wp.currentWeaponIndex];
 
-        GameObject textMeshObject2 = GameObject.Find("txtCurrentWeapon");
-        TextMeshProUGUI textMeshInstanceTwo = textMeshObject2.GetComponent<TextMeshProUGUI>();
+        // GameObject textMeshObject2 = GameObject.Find("txtCurrentWeapon");
+        // TextMeshProUGUI textMeshInstanceTwo = textMeshObject2.GetComponent<TextMeshProUGUI>();
 
-        textMeshInstanceTwo.text = "" + currentWeapon.name;
+        // textMeshInstanceTwo.text = "" + currentWeapon.name;
     }
 }

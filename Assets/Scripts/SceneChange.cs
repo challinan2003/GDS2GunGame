@@ -9,9 +9,15 @@ public class SceneChange : MonoBehaviour
 
     private void OnCollisionEnter(Collision other) 
     {
-        if(other.GameObject.compareTag("Player")){
+        if(other.gameObject.CompareTag("Player")){
 
             if(currentLevel == "Level 1"){
+                StartCoroutine(TransitionToScene());
+            }
+            if(currentLevel == "Level 2"){
+                StartCoroutine(TransitionToScene());
+            }
+            if(currentLevel == "Level 3"){
                 StartCoroutine(TransitionToScene());
             }
            

@@ -5,9 +5,18 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Jason's Test Scene DONT TOUCH PLZ.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/Level 1.unity
+    guid: 356608db5ea0e6e469dfb14bb65df8bd
+  - enabled: 1
+    path: Assets/Scenes/Level 2.unity
+    guid: 2f2ff8bc4b76d514b9637dd96d2506e7
+  - enabled: 1
+    path: Assets/Scenes/Level 3.unity
+    guid: 93ad1fb34fc1820419802df9d848c95b
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
